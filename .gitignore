@@ -1,5 +1,7 @@
-.vscode/
+build/
 
 *.settings.json
 *.ico
 *.bat
+tempCodeRunnerFile.py
+*.spec
