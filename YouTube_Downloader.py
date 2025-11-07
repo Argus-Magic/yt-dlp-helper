@@ -1,5 +1,6 @@
 import flet as ft
 import subprocess
+import os
 from tkinter import filedialog, Tk
 
 def main(page: ft.Page):
@@ -27,6 +28,7 @@ def main(page: ft.Page):
         width=150,
     )
     status = ft.Text(value="", color="green")
+    open_folder_btn = ft.ElevatedButton("Open Folder", visible=False)
 
     # Functions
     def browse_folder(e):
@@ -43,6 +45,13 @@ def main(page: ft.Page):
         except ImportError:
             status.value = "Install pyperclip for paste support (pip install pyperclip)"
             page.update()
+            
+    def open_folder(e):
+        if os.path.isdir(path_field.value):
+            os.startfile(path_field.value)
+        else:
+            status.value = "❌ Directory not found!"
+        page.update()
 
     def download(e):
         if not url_field.value or not path_field.value:
@@ -59,7 +68,10 @@ def main(page: ft.Page):
         ]
         subprocess.run(cmd)
         status.value = "✅ Download complete!"
+        open_folder_btn.visible = True
         page.update()
+        
+    open_folder_btn.on_click = open_folder
 
     # Layout
     page.add(
@@ -69,6 +81,7 @@ def main(page: ft.Page):
                 ft.Row([url_field, ft.ElevatedButton("Paste", on_click=paste_link)]),
                 ft.Row([format_dropdown, quality_dropdown]),
                 ft.ElevatedButton("Download", on_click=download),
+                open_folder_btn,
                 status,
             ],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -77,3 +90,6 @@ def main(page: ft.Page):
     )
 
 ft.app(target=main)
+
+#This is to create the executable
+#pyinstaller --onefile --noconsole --icon=appicon.ico YouTube_Downloader.py
