@@ -21,8 +21,53 @@ def main(page: ft.Page):
         )
     )
 
-    # Hide tkinter root window (for folder picker)
-    Tk().withdraw()
+    # Functions
+    def browse_folder(e):
+        # Create a new Tkinter root window and bring it to front
+        root = Tk()
+        root.withdraw()  # Hide the main window
+        root.attributes('-topmost', True)  # Make it topmost
+        
+        folder = filedialog.askdirectory(parent=root)
+        if folder:
+            path_field.value = folder
+            page.update()
+        
+        root.destroy()  # Clean up the Tkinter instance
+
+    def paste_link(e):
+        try:
+            import pyperclip
+            url_field.value = pyperclip.paste()
+            page.update()
+        except ImportError:
+            status.value = "Install pyperclip for paste support (pip install pyperclip)"
+            page.update()
+            
+    def open_folder(e):
+        if os.path.isdir(path_field.value):
+            os.startfile(path_field.value)
+        else:
+            status.value = "❌ Directory not found!"
+        page.update()
+
+    def download(e):
+        if not url_field.value or not path_field.value:
+            status.value = "❌ Missing link or output directory."
+            page.update()
+            return
+
+        cmd = [
+            "yt-dlp",
+            "-x",
+            "--audio-format", format_dropdown.value,
+            "-o", f"{path_field.value}/%(title)s.%(ext)s",
+            url_field.value,
+        ]
+        subprocess.run(cmd)
+        status.value = "✅ Download complete!"
+        open_folder_btn_container.visible = True
+        page.update()
 
     # Classic button style
     def create_classic_button(text, on_click=None, width=120, height=28):
@@ -63,7 +108,7 @@ def main(page: ft.Page):
             height=28
         )
 
-    # Classic dropdown style
+    # Classic dropdown style (without height parameter)
     def create_classic_dropdown(**kwargs):
         return ft.Dropdown(
             **kwargs,
@@ -72,8 +117,7 @@ def main(page: ft.Page):
             border_radius=0,
             bgcolor="white",
             text_size=11,
-            color="black",
-            height=28
+            color="black"
         )
 
     # UI Elements with classic styling
@@ -107,50 +151,10 @@ def main(page: ft.Page):
     
     status = ft.Text(value="", color="green", size=11, weight=ft.FontWeight.BOLD)
     
-    open_folder_btn = create_classic_button("Open Folder", visible=False)
-
-    # Functions (unchanged)
-    def browse_folder(e):
-        folder = filedialog.askdirectory()
-        if folder:
-            path_field.value = folder
-            page.update()
-
-    def paste_link(e):
-        try:
-            import pyperclip
-            url_field.value = pyperclip.paste()
-            page.update()
-        except ImportError:
-            status.value = "Install pyperclip for paste support (pip install pyperclip)"
-            page.update()
-            
-    def open_folder(e):
-        if os.path.isdir(path_field.value):
-            os.startfile(path_field.value)
-        else:
-            status.value = "❌ Directory not found!"
-        page.update()
-
-    def download(e):
-        if not url_field.value or not path_field.value:
-            status.value = "❌ Missing link or output directory."
-            page.update()
-            return
-
-        cmd = [
-            "yt-dlp",
-            "-x",
-            "--audio-format", format_dropdown.value,
-            "-o", f"{path_field.value}/%(title)s.%(ext)s",
-            url_field.value,
-        ]
-        subprocess.run(cmd)
-        status.value = "✅ Download complete!"
-        open_folder_btn.visible = True
-        page.update()
-        
-    open_folder_btn.on_click = open_folder
+    # Create open folder button and set visibility separately
+    open_folder_btn_container = create_classic_button("Open Folder", width=120, height=28)
+    open_folder_btn_container.visible = False
+    open_folder_btn_container.on_click = open_folder
 
     # Create classic buttons
     browse_btn = create_classic_button("Browse", on_click=browse_folder, width=80)
@@ -191,7 +195,7 @@ def main(page: ft.Page):
                                     margin=ft.margin.only(top=10, bottom=10)
                                 ),
                                 ft.Container(
-                                    content=open_folder_btn,
+                                    content=open_folder_btn_container,
                                     alignment=ft.alignment.center
                                 ),
                                 ft.Container(
